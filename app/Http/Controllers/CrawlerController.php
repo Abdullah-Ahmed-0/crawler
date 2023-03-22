@@ -42,12 +42,48 @@ class CrawlerController extends Controller
     }
     public function getspinneysSubCategories(){
         $langs                               = ['en', 'ar'];
-        if(DB::table('categories')->count() >= 1){
+        if(DB::table('sub_categories')->count() >= 1){
             die('Categories have been crawled already - <a href="getSubCategories">Go to sub categories crawler</a>');
         }
-        foreach($langs as $lang){
-            
+        $categories                          = DB::table('categories')->get();
+
+        $all_subs                        = [];
+        foreach($categories as $category){
+            $dom                             = new Dom;
+            $dom->loadFromFile($category->url);
+            $sub_categories                  = $dom->find('.row.flex-wrap.justify-content-start.px-3.d-flex.align-items-start.text-capitalize');
+            foreach($sub_categories as $sub_category){
+                $sub_anchors                 = $sub_category->find('a');
+                foreach($sub_anchors as $sub_anchor){
+                    $sub_anchor_link         = $sub_anchor->getAttribute('data-href');
+                    $sub_anchor_name         = $sub_anchor->text;
+
+                    // $numb_of_products        = $dom->find('.page-item.as')->count() * 60;
+                    if(strtolower($sub_anchor_name) != 'all'){
+                        array_push($all_subs,
+                        [
+                            'name_en'                   => $sub_anchor_name,
+                            'url'                       => $sub_anchor_link,
+                            'parent_id'                 => $category->id,
+                            // 'numb_of_products'          => 60,
+                            'captured_products'         => 0,
+                            'is_active'                 => 1
+                        ]);
+                    }
+                }
+            }
         }
+        DB::table('sub_categories')->insert($all_subs);
+        $all_sub_categories                         = DB::table('sub_categories')->get();
+        foreach($all_sub_categories as $sub_category){
+            $url                                    = $sub_category->url;
+            $exploded                               = explode('en', $url);
+            dd($exploded);
+        }
+        dd($all_subs);
+            // array_push($all, ['parent'=> $name, 'sub_categorires' => $all_subs]);
+
+        // ar
     }
     public function getspinneysProducts(){
         $lang                               = 'en';
