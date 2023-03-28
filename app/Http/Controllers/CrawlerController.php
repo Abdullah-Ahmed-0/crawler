@@ -158,10 +158,10 @@ class CrawlerController extends Controller
                 // $product_details->product_id        = $product->getAttribute('productid');
                 array_push($products_array, $product_details);
                 // dd($product->getAttribute('productid'));
-                DB::table('products')->insert($products_array);
                 DB::table('sub_categories')->where('id', $category->id)->update(['captured_products' => $category->captured_products + 1]);
                 // dd($product_details);
             }
+            DB::table('products')->insert($products_array);
         }
     }
     public function getspinneysProducts(){
