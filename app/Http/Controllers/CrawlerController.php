@@ -170,16 +170,21 @@ class CrawlerController extends Controller
 
     public function update_arabic_products(){
         // dd('ss');
-        $products                                   = DB::table('products')->get();
+        $products                                   = DB::table('products')->where('name_ar', '!=', 'null')->get();
         $dom                                        = new Dom;
         $products_array                             = [];
         foreach($products as $product){
             $rename                                 = str_replace('com/en', 'com/ar', $product->spyn_url);
             $dom->loadFromFile($rename);
-            $name                                   = $dom->find('.h4.text-capitalize.mb-0')->text;
-            array_push($products_array, ['name_ar' => $name]);
+            $name                                   = $dom->find('.mt-0.title.h3')->text;
+            // For updating arabic description
+            // $description                            = $dom->find('.moreDesc')->find('p');
+            // $product_details['description']         = $description[0] != null ? $description->text : $dom->find('.moreDesc')->text;
+            // dd($name->text);
+            // array_push($products_array, ['name_ar' => $name]);
+            DB::table('products')->where('id', $product->id)->update(['name_ar' => $name]);
         }
-        dd($products_array);
+        // dd($products_array);
         // DB::table('products')->insert($products_array);
     }
     public function getspinneysProducts(){
