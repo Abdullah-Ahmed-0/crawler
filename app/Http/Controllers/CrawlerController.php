@@ -154,7 +154,7 @@ class CrawlerController extends Controller
                 $product_details['unit']                = trim($product_dom->find('.unit_measure')->text);
                 // dd($product_dom->find('.moreDesc')->find('p')->text);
                 $description                            = $product_dom->find('.moreDesc')->find('p');
-                $product_details['description']         = $description[0] != null ? $description->text : null;
+                $product_details['description']         = $description[0] != null ? $description->text : $product_dom->find('.moreDesc')->text;
                 // $product_details->product_id        = $product->getAttribute('productid');
                 array_push($products_array, $product_details);
                 // dd($product->getAttribute('productid'));
