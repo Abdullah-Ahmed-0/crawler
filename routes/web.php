@@ -28,6 +28,7 @@ Route::get('/alo', 'App\Http\Controllers\CrawlerController@alo')->name('alo');
 Route::get('/spinneys-categoires', 'App\Http\Controllers\CrawlerController@getspinneysParentCategories')->name('getspinneysParentCategories');
 Route::get('/spinneys-sub-categoires', 'App\Http\Controllers\CrawlerController@getspinneysSubCategories')->name('getspinneysSubCategories');
 Route::get('/get-spinneys-products', 'App\Http\Controllers\CrawlerController@getSpinneysProductsByCategory')->name('getSpinneysProductsByCategory');
+Route::get('/update-spinneys-products', 'App\Http\Controllers\CrawlerController@update_arabic_products')->name('update_arabic_products');
 
 
 

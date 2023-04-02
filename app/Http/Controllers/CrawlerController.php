@@ -129,19 +129,19 @@ class CrawlerController extends Controller
                 $details                                = $product->find('.details');
                 $anchor                                 = $details->find('a')->getAttribute('href');
                 $product_name                           = $details->find('.h4.text-capitalize.mb-0')->text;
-                $arabic_dom_url                         = explode('/en/', $product->find('.imgwrap')->getAttribute('href'));
-                $arabic_dom_url                         = implode('/ar/', $arabic_dom_url);
-                $arabic_dom                             = new Dom;
-                $arabic_dom->loadFromFile($arabic_dom_url);
-                $product_name_ar                        = $arabic_dom->find('.h4.text-capitalize.mb-0')->text;
+                // $arabic_dom_url                         = explode('/en/', $product->find('.imgwrap')->getAttribute('href'));
+                // $arabic_dom_url                         = implode('/ar/', $arabic_dom_url);
+                // $arabic_dom                             = new Dom;
+                // $arabic_dom->loadFromFile($arabic_dom_url);
+                // $product_name_ar                        = $arabic_dom->find('.h4.text-capitalize.mb-0')->text;
                 $product_price                          = $product->find('meta[itemprop=price]')->getAttribute('content');
                 // dd($details);
                 if($product->find('.discount')[0] != null){
-                    $product_details['dicounted_price'] = explode(' ', $product->find('.priceBefore.regular-price')->text)[1];
+                    $product_details['dicounted_price'] = explode(' ', trim($product->find('.priceBefore.regular-price')->text))[1];
                 }
                 $product_details                        =  [];
                 $product_details['name_en']             = $product_name;
-                $product_details['name_ar']             = $product_name_ar;
+                // $product_details['name_ar']             = $product_name_ar;
                 $product_details['category_name_en']    = $category->name_en;
                 $product_details['category_name_ar']    = $category->name_ar;
                 $product_details['price']               = (double) $product_price;
@@ -155,14 +155,32 @@ class CrawlerController extends Controller
                 // dd($product_dom->find('.moreDesc')->find('p')->text);
                 $description                            = $product_dom->find('.moreDesc')->find('p');
                 $product_details['description']         = $description[0] != null ? $description->text : $product_dom->find('.moreDesc')->text;
-                // $product_details->product_id        = $product->getAttribute('productid');
+                $product_details['product_id']        = $product->getAttribute('productid');
                 array_push($products_array, $product_details);
                 // dd($product->getAttribute('productid'));
-                DB::table('sub_categories')->where('id', $category->id)->update(['captured_products' => $category->captured_products + 1]);
+                DB::table('sub_categories')->where('id', $category->id)->increment('captured_products');
+                if(DB::table('sub_categories')->where('id', $category->id)->first()->captured_products == DB::table('sub_categories')->where('id', $category->id)->count()){
+                    DB::table('sub_categories')->where('id', $category->id)->update(['is_active'=> 0]);
+                }
                 // dd($product_details);
             }
             DB::table('products')->insert($products_array);
         }
+    }
+
+    public function update_arabic_products(){
+        // dd('ss');
+        $products                                   = DB::table('products')->get();
+        $dom                                        = new Dom;
+        $products_array                             = [];
+        foreach($products as $product){
+            $rename                                 = str_replace('com/en', 'com/ar', $product->spyn_url);
+            $dom->loadFromFile($rename);
+            $name                                   = $dom->find('.h4.text-capitalize.mb-0')->text;
+            array_push($products_array, ['name_ar' => $name]);
+        }
+        dd($products_array);
+        // DB::table('products')->insert($products_array);
     }
     public function getspinneysProducts(){
         $lang                               = 'en';
