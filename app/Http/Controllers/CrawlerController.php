@@ -155,7 +155,19 @@ class CrawlerController extends Controller
                 // dd($product_dom->find('.moreDesc')->find('p')->text);
                 $description                            = $product_dom->find('.moreDesc')->find('p');
                 $product_details['description']         = $description[0] != null ? $description->text : $product_dom->find('.moreDesc')->text;
-                $product_details['product_id']        = $product->getAttribute('productid');
+                $product_details['product_id']          = $product->getAttribute('productid');
+                $product_images                         = $product_dom->find('.swiper-slide')->find('img');
+                // dd($product_images);
+                $images                                 = [];
+                foreach($product_images as $product_image){
+                    $string  = $product_image->getAttribute('data-src');
+                    preg_match_all('/\d+/', $string, $matches);
+                    $image   = $product_image->getAttribute('data-src');
+                    if($matches[0] == $product_details['product_id']){
+                        array_push($images, $image);
+                    }
+                }
+                $product_details['photos']              = implode(',', $images);
                 array_push($products_array, $product_details);
                 // dd($product->getAttribute('productid'));
                 DB::table('sub_categories')->where('id', $category->id)->increment('captured_products');
@@ -178,11 +190,10 @@ class CrawlerController extends Controller
             $dom->loadFromFile($rename);
             $name                                   = $dom->find('.mt-0.title.h3')->text;
             // For updating arabic description
-            // $description                            = $dom->find('.moreDesc')->find('p');
-            // $product_details['description']         = $description[0] != null ? $description->text : $dom->find('.moreDesc')->text;
+            $description                            = $dom->find('.moreDesc')->find('p');
+            $description_ar                         = $description[0] != null ? $description->text : $dom->find('.moreDesc')->text;
             // dd($name->text);
-            // array_push($products_array, ['name_ar' => $name]);
-            DB::table('products')->where('id', $product->id)->update(['name_ar' => $name]);
+            DB::table('products')->where('id', $product->id)->update(['name_ar' => $name, 'description_ar' => $description_ar]);
         }
         // dd($products_array);
         // DB::table('products')->insert($products_array);
