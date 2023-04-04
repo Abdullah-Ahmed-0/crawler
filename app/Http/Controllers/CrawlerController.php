@@ -113,17 +113,16 @@ class CrawlerController extends Controller
 
             $products                       = $dom->find('.sp-product');
             // this should be captured products and  % by 60 and get the output in ?page=%
-            if($category->num_of_products > $products->count()){
-                $new_dom                    = new Dom;
-                $new_dom->loadFromFile($category->url.'?page=2');
-                dd($new_dom->find('.sp-product')->count());
+            // if($category->num_of_products > $products->count()){
+            //     $new_dom                    = new Dom;
+            //     $new_dom->loadFromFile($category->url.'?page=2');
+            //     dd($new_dom->find('.sp-product')->count());
 
-            }
+            // }
             $products_array                             = [];
             foreach($products as $product){
             $exists                                     = DB::table('products')->where('product_id', $product->getAttribute('productid'))->first();
                 if($exists){
-                    // dd($exists);
                     continue;
                 }
                 $details                                = $product->find('.details');
@@ -140,7 +139,7 @@ class CrawlerController extends Controller
                     $product_details['dicounted_price'] = explode(' ', trim($product->find('.priceBefore.regular-price')->text))[1];
                 }
                 $product_details                        =  [];
-                $product_details['name_en']             = $product_name;
+                $product_details['name_en']             = trim($product_name);
                 // $product_details['name_ar']             = $product_name_ar;
                 $product_details['category_name_en']    = $category->name_en;
                 $product_details['category_name_ar']    = $category->name_ar;
@@ -151,38 +150,45 @@ class CrawlerController extends Controller
 
                 $product_dom                            = new Dom;
                 $product_dom->loadFromUrl($product_details['spyn_url']);
-                $product_details['unit']                = trim($product_dom->find('.unit_measure')->text);
+                $product_details['unit']                = $product_dom->find('.unit_measure')[0] != null ? trim($product_dom->find('.unit_measure')->text) : null;
                 // dd($product_dom->find('.moreDesc')->find('p')->text);
                 $description                            = $product_dom->find('.moreDesc')->find('p');
-                $product_details['description']         = $description[0] != null ? $description->text : $product_dom->find('.moreDesc')->text;
+                $product_details['description']         = $description[0] != null ? trim($description->text) :trim($product_dom->find('.moreDesc')->text);
                 $product_details['product_id']          = $product->getAttribute('productid');
-                $product_images                         = $product_dom->find('.swiper-slide')->find('img');
-                // dd($product_images);
-                $images                                 = [];
-                foreach($product_images as $product_image){
-                    $string  = $product_image->getAttribute('data-src');
-                    preg_match_all('/\d+/', $string, $matches);
-                    $image   = $product_image->getAttribute('data-src');
-                    if($matches[0] == $product_details['product_id']){
-                        array_push($images, $image);
-                    }
-                }
-                $product_details['photos']              = implode(',', $images);
+                // $product_images                         = $product_dom->find('.swiper-slide')->find('img');
+                // // dd($product_images);
+                // $images                                 = [];
+                // foreach($product_images as $product_image){
+                //     $string  = $product_image->getAttribute('data-src');
+                //     preg_match_all('/\d+/', $string, $matches);
+                //     $image   = $product_image->getAttribute('data-src');
+                //     if($matches[0] == $product_details['product_id']){
+                //         array_push($images, $image);
+                //     }
+                // }
+                // $product_details['photos']              = implode(',', $images);
                 array_push($products_array, $product_details);
                 // dd($product->getAttribute('productid'));
                 DB::table('sub_categories')->where('id', $category->id)->increment('captured_products');
-                if(DB::table('sub_categories')->where('id', $category->id)->first()->captured_products == DB::table('sub_categories')->where('id', $category->id)->count()){
+                $captured_products                      = DB::table('sub_categories')->where('id', $category->id)->first()->captured_products;
+                $number_of_products                     = DB::table('sub_categories')->where('id', $category->id)->first()->num_of_products;
+                if($captured_products == $number_of_products){
                     DB::table('sub_categories')->where('id', $category->id)->update(['is_active'=> 0]);
+                    $next_category                      = DB::table('sub_categories')->where('id', '>', $category->id)->orderBy('id')->first();
+                    if($next_category){
+                        DB::table('sub_categories')->where('id',  $next_category->id)->update(['is_active' => 1]);
+                    }
                 }
                 // dd($product_details);
             }
             DB::table('products')->insert($products_array);
+            return 'ok';
         }
     }
 
     public function update_arabic_products(){
         // dd('ss');
-        $products                                   = DB::table('products')->where('name_ar', '!=', 'null')->get();
+        $products                                   = DB::table('products')->where('name_ar', NULL)->take(10)->get();
         $dom                                        = new Dom;
         $products_array                             = [];
         foreach($products as $product){
@@ -193,10 +199,15 @@ class CrawlerController extends Controller
             $description                            = $dom->find('.moreDesc')->find('p');
             $description_ar                         = $description[0] != null ? $description->text : $dom->find('.moreDesc')->text;
             // dd($name->text);
-            DB::table('products')->where('id', $product->id)->update(['name_ar' => $name, 'description_ar' => $description_ar]);
+            // dd($description_ar);
+            DB::table('products')->where('id', $product->id)->update([
+                'name_ar'           => $name,
+                'description_ar'    => $description_ar
+            ]);
         }
         // dd($products_array);
         // DB::table('products')->insert($products_array);
+        return 'done';
     }
     public function getspinneysProducts(){
         $lang                               = 'en';

@@ -2,7 +2,7 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
-
+use App\Http\Controllers\CrawlerController;
 /*
 |--------------------------------------------------------------------------
 | Console Routes
@@ -17,3 +17,8 @@ use Illuminate\Support\Facades\Artisan;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+Artisan::command('get_products', function(){
+    CrawlerController::getSpinneysProductsByCategory();
+    // CrawlerController::update_arabic_products();
+});
